@@ -89,6 +89,8 @@ export default function Quiz() {
         : settings.type === 'word-bangla' || settings.type === 'bangla-word'
           ? 'None of these cards have a Bangla meaning yet. Edit a card and click “Fetch from online”.'
           : 'None of these cards have a meaning yet.'
+  else if (settings.mode === 'options' && settings.type === 'word-bangla' && eligible.length < MIN_OPTION_CARDS)
+    problem = `“With options” needs at least ${MIN_OPTION_CARDS} cards with a Bangla meaning (you have ${eligible.length}).`
   else if (settings.mode === 'options' && pool.length < MIN_OPTION_CARDS)
     problem = `“With options” needs at least ${MIN_OPTION_CARDS} cards (you have ${pool.length}). Add more cards or choose “Without options”.`
 

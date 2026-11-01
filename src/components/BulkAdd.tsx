@@ -96,7 +96,7 @@ export default function BulkAdd({
               value={text}
               onChange={(e) => setText(e.target.value)}
             />
-            <p className="mt-1 text-xs text-stone-500">{words.length} word{words.length === 1 ? '' : 's'} · meanings, Bangla meanings and synonyms are fetched online automatically.</p>
+            <p className="mt-1 text-xs text-stone-500">{words.length} word{words.length === 1 ? '' : 's'} · meanings, Bangla meanings and synonyms are fetched online automatically (Bangla is machine-translated — worth a quick check).</p>
           </div>
           <div>
             <label className={label} htmlFor="bulk-deck">Add to deck</label>

@@ -66,7 +66,37 @@ async function fetchDatamuseSynonyms(word: string): Promise<string[]> {
   }
 }
 
-/** Returns null when the word is not found. Throws on network/service errors. */
+const DATAMUSE_POS: Record<string, string> = { n: 'noun', v: 'verb', adj: 'adjective', adv: 'adverb' }
+
+/** Backup definitions from Datamuse (used when the Free Dictionary API is down or lacks the word). */
+async function fetchDatamuseSenses(word: string): Promise<Sense[]> {
+  try {
+    const res = await fetch(`https://api.datamuse.com/words?sp=${encodeURIComponent(word)}&md=d&max=1`)
+    if (!res.ok) return []
+    const data = (await res.json()) as { word: string; defs?: string[] }[]
+    if (data[0]?.word.toLowerCase() !== word) return []
+    return (data[0].defs ?? []).map((d) => {
+      const [pos, ...rest] = d.split('\t')
+      return { partOfSpeech: DATAMUSE_POS[pos] ?? pos, definition: rest.join(' ').trim() }
+    })
+  } catch {
+    return []
+  }
+}
+
+/** Dictionary lookup with one retry; 'failed' means the service could not be reached. */
+async function fetchDictionarySafe(word: string): Promise<DictEntry[] | null | 'failed'> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      return await fetchDictionary(word)
+    } catch {
+      // Network error or 5xx: try once more, then give up.
+    }
+  }
+  return 'failed'
+}
+
+/** Returns null when the word is not found anywhere. */
 export async function lookupWord(input: string): Promise<LookupResult | null> {
   const word = input.trim().toLowerCase()
   if (!word) return null
@@ -74,14 +104,16 @@ export async function lookupWord(input: string): Promise<LookupResult | null> {
   const cached = readCache(word)
   if (cached !== undefined) return cached
 
-  const [entries, extraSynonyms] = await Promise.all([fetchDictionary(word), fetchDatamuseSynonyms(word)])
+  const [entries, extraSynonyms] = await Promise.all([fetchDictionarySafe(word), fetchDatamuseSynonyms(word)])
 
-  if (!entries || entries.length === 0) {
-    // Datamuse alone can still give synonyms for words the dictionary lacks.
-    const result = extraSynonyms.length
-      ? { word, senses: [], synonyms: extraSynonyms.slice(0, MAX_SYNONYMS) }
-      : null
-    writeCache(word, result)
+  if (entries === 'failed' || !entries || entries.length === 0) {
+    const senses = await fetchDatamuseSenses(word)
+    const result =
+      senses.length || extraSynonyms.length
+        ? { word, senses: senses.slice(0, 8), synonyms: extraSynonyms.slice(0, MAX_SYNONYMS) }
+        : null
+    // Don't cache while the main dictionary is down, so a later lookup gets full data.
+    if (entries !== 'failed') writeCache(word, result)
     return result
   }
 
@@ -147,16 +179,18 @@ export async function translateToBangla(input: string): Promise<string | null> {
   if (!res.ok) throw new Error(`Translation service error (${res.status})`)
   const data = (await res.json()) as {
     responseData?: { translatedText?: string }
-    matches?: { translation?: string; match?: number }[]
+    matches?: { segment?: string; translation?: string; match?: number }[]
   }
 
   const found: string[] = []
   const add = (t?: string) => {
-    const clean = t?.trim().replace(/[।.]+$/, '')
+    const clean = t?.normalize('NFC').trim().replace(/^["'“”‘’]+|["'“”‘’!?।.,]+$/g, '').trim()
     if (clean && BENGALI.test(clean) && clean.length <= 40 && !found.includes(clean)) found.push(clean)
   }
   add(data.responseData?.translatedText)
-  for (const m of data.matches ?? []) if ((m.match ?? 0) >= 0.7) add(m.translation)
+  // Alternatives only from entries that translate exactly this word, not phrases containing it.
+  const exact = (s?: string) => s?.toLowerCase().replace(/[^\p{L}\s-]/gu, '').trim() === word
+  for (const m of data.matches ?? []) if ((m.match ?? 0) >= 0.7 && exact(m.segment)) add(m.translation)
 
   const result = found.slice(0, 3).join(', ')
   try {

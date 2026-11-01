@@ -171,6 +171,9 @@ export default function CardForm({ decks, card, defaultDeckId, onSaved, onCancel
       <div>
         <label className={label} htmlFor="meaning-bn">Bangla meaning <span className="font-normal text-stone-400">(বাংলা অর্থ)</span></label>
         <input id="meaning-bn" className={input} value={meaningBn} placeholder="e.g. ক্ষণস্থায়ী" onChange={(e) => setMeaningBn(e.target.value)} />
+        {meaningBn && meaningBn !== card?.meaning_bn && (
+          <p className="mt-1 text-xs text-stone-500">Auto-translated — please check it's right and edit if needed.</p>
+        )}
       </div>
 
       <div>
