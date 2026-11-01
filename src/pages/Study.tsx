@@ -52,7 +52,7 @@ export default function Study() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).closest('input, select, textarea')) return
+      if (e.target instanceof Element && e.target.closest('input, select, textarea')) return
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault()
         setFlipped((f) => !f)
@@ -109,7 +109,8 @@ export default function Study() {
         </EmptyState>
       ) : (
         <>
-          <FlipCard card={card} flipped={flipped} onFlip={() => setFlipped((f) => !f)} />
+          {/* Keyed so a new card mounts face-up instead of animating back and revealing its answer. */}
+          <FlipCard key={card.id} card={card} flipped={flipped} onFlip={() => setFlipped((f) => !f)} />
 
           <div className="grid grid-cols-[auto_1fr_1fr_auto] gap-2">
             <button className={btn.secondary} onClick={() => go(-1)} aria-label="Previous card">←</button>
