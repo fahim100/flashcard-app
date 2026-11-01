@@ -47,6 +47,12 @@ export async function deleteCard(id: string): Promise<void> {
   check(await supabase.from('cards').delete().eq('id', id))
 }
 
+export async function deleteCards(ids: string[]): Promise<void> {
+  for (let i = 0; i < ids.length; i += 200) {
+    check(await supabase.from('cards').delete().in('id', ids.slice(i, i + 200)))
+  }
+}
+
 export async function saveQuizResult(result: Omit<QuizResult, 'id' | 'created_at'>): Promise<void> {
   check(await supabase.from('quiz_results').insert(result))
 }
