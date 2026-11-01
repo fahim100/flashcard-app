@@ -200,3 +200,15 @@ export async function translateToBangla(input: string): Promise<string | null> {
   }
   return result || null
 }
+
+/** Speaks a word with the browser's text-to-speech, preferring a British voice (IELTS). */
+export function speak(text: string) {
+  if (!('speechSynthesis' in window)) return
+  const u = new SpeechSynthesisUtterance(text)
+  const voices = speechSynthesis.getVoices()
+  u.voice = voices.find((v) => v.lang === 'en-GB') ?? voices.find((v) => v.lang.startsWith('en')) ?? null
+  u.lang = 'en-GB'
+  u.rate = 0.85
+  speechSynthesis.cancel()
+  speechSynthesis.speak(u)
+}

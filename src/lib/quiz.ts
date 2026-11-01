@@ -150,3 +150,36 @@ export function buildQuestions(
     return q
   })
 }
+
+/** Spelling is checked strictly: only case and extra spaces are ignored. */
+export function checkSpelling(input: string, word: string): boolean {
+  const clean = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim()
+  return clean(input) === clean(word)
+}
+
+/**
+ * Marks which letters of the correct word the learner got right, using the
+ * longest common subsequence: letters outside it were missed or wrong.
+ */
+export function spellingDiff(given: string, correct: string): { char: string; ok: boolean }[] {
+  const a = given.toLowerCase().trim()
+  const b = correct
+  const bl = b.toLowerCase()
+  const lcs = Array.from({ length: a.length + 1 }, () => new Array<number>(b.length + 1).fill(0))
+  for (let i = a.length - 1; i >= 0; i--)
+    for (let j = b.length - 1; j >= 0; j--)
+      lcs[i][j] = a[i] === bl[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1])
+
+  const ok = new Array<boolean>(b.length).fill(false)
+  let i = 0
+  let j = 0
+  while (i < a.length && j < b.length) {
+    if (a[i] === bl[j]) {
+      ok[j] = true
+      i++
+      j++
+    } else if (lcs[i + 1][j] >= lcs[i][j + 1]) i++
+    else j++
+  }
+  return [...b].map((char, k) => ({ char, ok: ok[k] }))
+}
