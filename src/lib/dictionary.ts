@@ -125,3 +125,44 @@ export async function lookupWord(input: string): Promise<LookupResult | null> {
 export function playAudio(url: string) {
   new Audio(url).play().catch(() => {})
 }
+
+const BN_CACHE_PREFIX = 'fw-bn:'
+const BENGALI = /[ঀ-৿]/
+
+/**
+ * Bangla meaning of an English word via the free MyMemory translation API.
+ * Returns up to 3 distinct translations joined with ", ", or null if none.
+ */
+export async function translateToBangla(input: string): Promise<string | null> {
+  const word = input.trim().toLowerCase()
+  if (!word) return null
+  try {
+    const cached = localStorage.getItem(BN_CACHE_PREFIX + word)
+    if (cached !== null) return cached || null
+  } catch {
+    // ignore
+  }
+
+  const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=en|bn`)
+  if (!res.ok) throw new Error(`Translation service error (${res.status})`)
+  const data = (await res.json()) as {
+    responseData?: { translatedText?: string }
+    matches?: { translation?: string; match?: number }[]
+  }
+
+  const found: string[] = []
+  const add = (t?: string) => {
+    const clean = t?.trim().replace(/[।.]+$/, '')
+    if (clean && BENGALI.test(clean) && clean.length <= 40 && !found.includes(clean)) found.push(clean)
+  }
+  add(data.responseData?.translatedText)
+  for (const m of data.matches ?? []) if ((m.match ?? 0) >= 0.7) add(m.translation)
+
+  const result = found.slice(0, 3).join(', ')
+  try {
+    localStorage.setItem(BN_CACHE_PREFIX + word, result)
+  } catch {
+    // ignore
+  }
+  return result || null
+}

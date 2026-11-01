@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import type { Schedule } from './srs'
 import type { Card, CardInput, CardStatus, Deck, QuizResult } from './types'
 
 function check<T>(res: { data: T | null; error: { message: string } | null }): T {
@@ -36,6 +37,10 @@ export async function createCards(inputs: CardInput[]): Promise<Card[]> {
 
 export async function updateCard(id: string, patch: Partial<CardInput> & { status?: CardStatus }): Promise<Card> {
   return check(await supabase.from('cards').update(patch).eq('id', id).select().single())
+}
+
+export async function saveReview(id: string, s: Schedule): Promise<void> {
+  check(await supabase.from('cards').update(s).eq('id', id))
 }
 
 export async function deleteCard(id: string): Promise<void> {

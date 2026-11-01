@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { createCards } from '../lib/api'
-import { lookupWord } from '../lib/dictionary'
+import { lookupWord, translateToBangla } from '../lib/dictionary'
 import type { Card, CardInput, Deck } from '../lib/types'
 import { btn, ErrorBox, input, label, Spinner } from './ui'
 
@@ -42,13 +42,14 @@ export default function BulkAdd({
     for (let i = 0; i < list.length; i++) {
       let state: Row['state']
       try {
-        const r = await lookupWord(list[i].word)
+        const [r, bn] = await Promise.all([lookupWord(list[i].word), translateToBangla(list[i].word).catch(() => null)])
         if (r && (r.senses.length || r.synonyms.length)) {
           const s = r.senses[0]
           inputs.push({
             word: list[i].word,
             deck_id: deckId || null,
             meaning: s?.definition ?? '',
+            meaning_bn: bn,
             part_of_speech: s?.partOfSpeech ?? null,
             example: s?.example ?? null,
             synonyms: r.synonyms,
@@ -95,7 +96,7 @@ export default function BulkAdd({
               value={text}
               onChange={(e) => setText(e.target.value)}
             />
-            <p className="mt-1 text-xs text-stone-500">{words.length} word{words.length === 1 ? '' : 's'} · meanings and synonyms are fetched online automatically.</p>
+            <p className="mt-1 text-xs text-stone-500">{words.length} word{words.length === 1 ? '' : 's'} · meanings, Bangla meanings and synonyms are fetched online automatically.</p>
           </div>
           <div>
             <label className={label} htmlFor="bulk-deck">Add to deck</label>

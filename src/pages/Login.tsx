@@ -61,7 +61,7 @@ export default function Login() {
           <p className="mt-3 text-sm text-stone-500">Build word cards, flip them, and quiz yourself.</p>
         </div>
 
-        <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="rounded-2xl border border-stone-200 bg-surface p-6 shadow-sm sm:p-8">
           <h1 className="mb-5 text-xl font-bold text-stone-900">{titles[mode]}</h1>
 
           {mode !== 'forgot' && (
@@ -74,7 +74,7 @@ export default function Login() {
                     setMode(m)
                     setError(null)
                   }}
-                  className={`rounded-lg py-2 transition ${mode === m ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500'}`}
+                  className={`rounded-lg py-2 transition ${mode === m ? 'bg-surface text-stone-900 shadow-sm' : 'text-stone-500'}`}
                 >
                   {m === 'signin' ? 'Sign in' : 'Sign up'}
                 </button>

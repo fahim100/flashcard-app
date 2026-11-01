@@ -2,13 +2,15 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import BulkAdd from '../components/BulkAdd'
 import CardForm from '../components/CardForm'
+import CsvImport from '../components/CsvImport'
 import { btn, Chip, DeckSelect, EmptyState, ErrorBox, input, Loading, Modal, StatusBadge } from '../components/ui'
 import { deleteCard, listCards, listDecks } from '../lib/api'
+import { cardsToCsv, downloadText } from '../lib/csv'
 import { playAudio } from '../lib/dictionary'
 import type { Card } from '../lib/types'
 import { useAsync } from '../lib/useAsync'
 
-type Editing = { kind: 'new' } | { kind: 'edit'; card: Card } | { kind: 'bulk' } | null
+type Editing = { kind: 'new' } | { kind: 'edit'; card: Card } | { kind: 'bulk' } | { kind: 'import' } | null
 
 export default function Cards() {
   const [params, setParams] = useSearchParams()
@@ -41,7 +43,7 @@ export default function Cards() {
 
   const q = search.trim().toLowerCase()
   const visible = (cards.data ?? []).filter(
-    (c) => !q || c.word.toLowerCase().includes(q) || c.meaning.toLowerCase().includes(q) || c.synonyms.some((s) => s.toLowerCase().includes(q)),
+    (c) => !q || c.word.toLowerCase().includes(q) || c.meaning.toLowerCase().includes(q) || !!c.meaning_bn?.includes(q) || c.synonyms.some((s) => s.toLowerCase().includes(q)),
   )
   const deckName = (id: string | null) => decks.data?.find((d) => d.id === id)?.name
 
@@ -52,7 +54,18 @@ export default function Cards() {
           <h1 className="text-2xl font-extrabold tracking-tight text-stone-900 sm:text-3xl">Cards</h1>
           <p className="mt-1 text-stone-500">Add words — meanings and synonyms come from online.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button className={btn.secondary} onClick={() => setEditing({ kind: 'import' })}>Import CSV</button>
+          <button
+            className={btn.secondary}
+            disabled={!visible.length}
+            onClick={() => {
+              const name = decks.data?.find((d) => d.id === deckId)?.name ?? 'all-cards'
+              downloadText(`flashwords-${name.toLowerCase().replace(/\W+/g, '-')}.csv`, cardsToCsv(visible, decks.data ?? []))
+            }}
+          >
+            Export CSV
+          </button>
           <button className={btn.secondary} onClick={() => setEditing({ kind: 'bulk' })}>Bulk add</button>
           <button className={btn.primary} onClick={() => setEditing({ kind: 'new' })}>+ Add card</button>
         </div>
@@ -78,7 +91,7 @@ export default function Cards() {
       ) : (
         <ul className="grid gap-3 md:grid-cols-2">
           {visible.map((c) => (
-            <li key={c.id} className="flex flex-col rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+            <li key={c.id} className="flex flex-col rounded-2xl border border-stone-200 bg-surface p-4 shadow-sm">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-baseline gap-x-2">
@@ -93,6 +106,7 @@ export default function Cards() {
                 <StatusBadge status={c.status} />
               </div>
               <p className="mt-2 line-clamp-3 text-sm text-stone-600">{c.meaning || <em className="text-stone-400">No meaning yet</em>}</p>
+              {c.meaning_bn && <p className="mt-1 text-sm font-medium text-stone-800">বাংলা: {c.meaning_bn}</p>}
               {c.synonyms.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {c.synonyms.slice(0, 6).map((s) => <Chip key={s}>{s}</Chip>)}
@@ -122,6 +136,21 @@ export default function Cards() {
           />
         </Modal>
       ) : null}
+
+      {editing?.kind === 'import' && (
+        <Modal title="Import cards from CSV" onClose={closeModal}>
+          <CsvImport
+            decks={decks.data ?? []}
+            defaultDeckId={deckId}
+            onCancel={closeModal}
+            onDone={() => {
+              closeModal()
+              void decks.reload()
+              void cards.reload()
+            }}
+          />
+        </Modal>
+      )}
 
       {editing?.kind === 'bulk' && (
         <Modal title="Bulk add words" onClose={closeModal}>

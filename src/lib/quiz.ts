@@ -16,6 +16,8 @@ export const QUESTION_TYPES: { value: QuestionType; label: string; hint: string 
   { value: 'word-meaning', label: 'Word → Meaning', hint: 'See the word, pick its meaning' },
   { value: 'meaning-word', label: 'Meaning → Word', hint: 'See the meaning, find the word' },
   { value: 'word-synonym', label: 'Word → Synonym', hint: 'See the word, give a synonym' },
+  { value: 'word-bangla', label: 'Word → বাংলা', hint: 'See the word, pick the Bangla meaning' },
+  { value: 'bangla-word', label: 'বাংলা → Word', hint: 'See the Bangla meaning, find the word' },
 ]
 
 export function shuffle<T>(items: T[]): T[] {
@@ -30,7 +32,7 @@ export function shuffle<T>(items: T[]): T[] {
 export function normalize(s: string): string {
   return s
     .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s'-]/gu, '')
+    .replace(/[^\p{L}\p{M}\p{N}\s'-]/gu, '')
     .replace(/\s+/g, ' ')
     .trim()
 }
@@ -68,14 +70,14 @@ export function checkTyped(input: string, accepted: string[]): Verdict {
 
 /** Cards that can be asked about for a question type. */
 export function eligibleCards(cards: Card[], type: QuestionType): Card[] {
-  return type === 'word-synonym'
-    ? cards.filter((c) => c.synonyms.length > 0)
-    : cards.filter((c) => c.meaning.trim().length > 0)
+  if (type === 'word-synonym') return cards.filter((c) => c.synonyms.length > 0)
+  if (type === 'word-bangla' || type === 'bangla-word') return cards.filter((c) => c.meaning_bn?.trim())
+  return cards.filter((c) => c.meaning.trim().length > 0)
 }
 
-/** Typed mode can't sensibly grade a whole definition, so word → meaning needs options. */
+/** Typed mode can't sensibly grade a definition or Bangla text, so those need options. */
 export function typeAllowsMode(type: QuestionType, mode: QuizMode): boolean {
-  return !(type === 'word-meaning' && mode === 'typed')
+  return !((type === 'word-meaning' || type === 'word-bangla') && mode === 'typed')
 }
 
 function hideWord(text: string, word: string): string {
@@ -118,6 +120,17 @@ export function buildQuestions(
       }
     } else if (type === 'meaning-word') {
       q = { type, card, prompt: hideWord(card.meaning, card.word), answer: card.word, accepted: [card.word] }
+      if (mode === 'options') {
+        q.options = shuffle([card.word, ...distractors(others.map((c) => c.word), [card.word], 3)])
+      }
+    } else if (type === 'word-bangla') {
+      const bn = card.meaning_bn!
+      q = { type, card, prompt: card.word, answer: bn, accepted: [bn] }
+      if (mode === 'options') {
+        q.options = shuffle([bn, ...distractors(others.map((c) => c.meaning_bn ?? ''), [bn], 3)])
+      }
+    } else if (type === 'bangla-word') {
+      q = { type, card, prompt: card.meaning_bn!, answer: card.word, accepted: [card.word] }
       if (mode === 'options') {
         q.options = shuffle([card.word, ...distractors(others.map((c) => c.word), [card.word], 3)])
       }

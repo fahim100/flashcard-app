@@ -133,16 +133,16 @@ function FlipCard({ card, flipped, onFlip }: { card: Card; flipped: boolean; onF
         className={`flip-inner h-full w-full cursor-pointer text-left focus:outline-none ${flipped ? 'is-flipped' : ''}`}
         aria-label={flipped ? 'Show word' : 'Show meaning'}
       >
-        <div className="flip-face flex flex-col items-center justify-center rounded-3xl border border-stone-200 bg-white p-6 shadow-lg">
+        <div className="flip-face flex flex-col items-center justify-center rounded-3xl border border-stone-200 bg-surface p-6 shadow-lg">
           <div className="absolute top-4 right-4"><StatusBadge status={card.status} /></div>
           <p className="text-center text-4xl font-extrabold tracking-tight break-words text-stone-900 sm:text-5xl">{card.word}</p>
           {card.phonetic && <p className="mt-2 text-stone-500">{card.phonetic}</p>}
           <p className="absolute bottom-5 text-xs font-semibold tracking-wider text-stone-400 uppercase">Tap to flip</p>
         </div>
-        <div className="flip-face flip-back flex flex-col overflow-y-auto rounded-3xl bg-gradient-to-br from-emerald-600 to-emerald-800 p-6 text-white shadow-lg sm:p-8">
+        <div className="flip-face flip-back flex flex-col overflow-y-auto rounded-3xl bg-gradient-to-br from-emerald-600 to-emerald-950 p-6 text-white shadow-lg sm:p-8">
           <div className="flex items-baseline gap-2">
             <p className="text-2xl font-bold">{card.word}</p>
-            {card.part_of_speech && <span className="text-sm text-emerald-100 italic">{card.part_of_speech}</span>}
+            {card.part_of_speech && <span className="text-sm text-white/80 italic">{card.part_of_speech}</span>}
             {card.audio_url && (
               <span
                 role="button"
@@ -160,7 +160,13 @@ function FlipCard({ card, flipped, onFlip }: { card: Card; flipped: boolean; onF
           </div>
           <p className="mt-3 text-xs font-bold tracking-wider text-amber-300 uppercase">Meaning</p>
           <p className="mt-1 text-lg leading-snug">{card.meaning || '—'}</p>
-          {card.example && <p className="mt-3 text-sm text-emerald-100 italic">“{card.example}”</p>}
+          {card.meaning_bn && (
+            <>
+              <p className="mt-3 text-xs font-bold tracking-wider text-amber-300 uppercase">বাংলা অর্থ</p>
+              <p className="mt-1 text-lg">{card.meaning_bn}</p>
+            </>
+          )}
+          {card.example && <p className="mt-3 text-sm text-white/80 italic">“{card.example}”</p>}
           {card.synonyms.length > 0 && (
             <>
               <p className="mt-4 text-xs font-bold tracking-wider text-amber-300 uppercase">Synonyms</p>

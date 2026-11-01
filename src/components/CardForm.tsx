@@ -1,6 +1,6 @@
 import { useState, type FormEvent, type KeyboardEvent } from 'react'
 import { createCards, updateCard } from '../lib/api'
-import { lookupWord, playAudio, type LookupResult } from '../lib/dictionary'
+import { lookupWord, playAudio, translateToBangla, type LookupResult } from '../lib/dictionary'
 import type { Card, CardInput, Deck } from '../lib/types'
 import { btn, Chip, ErrorBox, input, label, Spinner } from './ui'
 
@@ -16,6 +16,7 @@ export default function CardForm({ decks, card, defaultDeckId, onSaved, onCancel
   const [word, setWord] = useState(card?.word ?? '')
   const [deckId, setDeckId] = useState(card?.deck_id ?? defaultDeckId ?? '')
   const [meaning, setMeaning] = useState(card?.meaning ?? '')
+  const [meaningBn, setMeaningBn] = useState(card?.meaning_bn ?? '')
   const [partOfSpeech, setPartOfSpeech] = useState(card?.part_of_speech ?? '')
   const [synonyms, setSynonyms] = useState<string[]>(card?.synonyms ?? [])
   const [synInput, setSynInput] = useState('')
@@ -35,8 +36,9 @@ export default function CardForm({ decks, card, defaultDeckId, onSaved, onCancel
     setFetching(true)
     setLookupMsg(null)
     try {
-      const result = await lookupWord(word)
+      const [result, bn] = await Promise.all([lookupWord(word), translateToBangla(word).catch(() => null)])
       setLookup(result)
+      if (bn) setMeaningBn(bn)
       if (!result) {
         setLookupMsg(`"${word.trim()}" wasn't found online. You can type the meaning yourself.`)
         return
@@ -88,6 +90,7 @@ export default function CardForm({ decks, card, defaultDeckId, onSaved, onCancel
       word: word.trim(),
       deck_id: deckId || null,
       meaning: meaning.trim(),
+      meaning_bn: meaningBn.trim() || null,
       part_of_speech: partOfSpeech.trim() || null,
       synonyms: [...synonyms, ...pending],
       example: example.trim() || null,
@@ -166,8 +169,13 @@ export default function CardForm({ decks, card, defaultDeckId, onSaved, onCancel
       </div>
 
       <div>
+        <label className={label} htmlFor="meaning-bn">Bangla meaning <span className="font-normal text-stone-400">(বাংলা অর্থ)</span></label>
+        <input id="meaning-bn" className={input} value={meaningBn} placeholder="e.g. ক্ষণস্থায়ী" onChange={(e) => setMeaningBn(e.target.value)} />
+      </div>
+
+      <div>
         <label className={label} htmlFor="syn">Synonyms</label>
-        <div className="flex flex-wrap gap-1.5 rounded-xl border border-stone-300 bg-white p-2 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20">
+        <div className="flex flex-wrap gap-1.5 rounded-xl border border-stone-300 bg-surface p-2 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20">
           {synonyms.map((s) => (
             <Chip key={s} onRemove={() => setSynonyms((prev) => prev.filter((x) => x !== s))}>
               {s}

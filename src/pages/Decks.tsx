@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { btn, EmptyState, ErrorBox, input, Loading, Spinner } from '../components/ui'
 import { createCards, createDeck, deleteDeck, listCards, listDecks, renameDeck } from '../lib/api'
 import { SAMPLE_CARDS } from '../lib/samples'
+import { isDue } from '../lib/srs'
 import type { Card, Deck } from '../lib/types'
 import { useAsync } from '../lib/useAsync'
 
@@ -57,7 +58,8 @@ export default function Decks() {
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-stone-900 sm:text-3xl">Your decks</h1>
           <p className="mt-1 text-stone-500">
-            {cards.length} card{cards.length === 1 ? '' : 's'} · {cards.filter((c) => c.status === 'known').length} known
+            {cards.length} card{cards.length === 1 ? '' : 's'} · {cards.filter((c) => c.status === 'known').length} known ·{' '}
+            <Link to="/review" className="font-semibold text-emerald-700 hover:underline">{cards.filter((c) => isDue(c)).length} due for review</Link>
           </p>
         </div>
         <form onSubmit={addDeck} className="flex gap-2 sm:w-80">
@@ -118,11 +120,12 @@ function DeckTile({
   onDelete?: () => void
 }) {
   const known = cards.filter((c) => c.status === 'known').length
+  const due = cards.filter((c) => isDue(c)).length
   const pct = cards.length ? Math.round((known / cards.length) * 100) : 0
   const q = deckParam ? `?deck=${deckParam}` : ''
 
   return (
-    <div className={`flex flex-col rounded-2xl border p-5 shadow-sm transition hover:shadow-md ${highlight ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-white' : 'border-stone-200 bg-white'}`}>
+    <div className={`flex flex-col rounded-2xl border p-5 shadow-sm transition hover:shadow-md ${highlight ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-surface' : 'border-stone-200 bg-surface'}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <h2 className="truncate text-lg font-bold text-stone-900">{title}</h2>
@@ -163,9 +166,12 @@ function DeckTile({
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-3 gap-2">
+      <Link to={`/review${q}`} className={`${btn.primary} mt-5 w-full ${due ? '' : 'opacity-60'}`}>
+        {due ? `Review ${due} due` : 'Nothing due — review'}
+      </Link>
+      <div className="mt-2 grid grid-cols-3 gap-2">
         <Link to={`/cards${q}`} className={`${btn.secondary} px-2`}>Cards</Link>
-        <Link to={`/study${q}`} className={`${btn.primary} px-2 ${cards.length ? '' : 'pointer-events-none opacity-50'}`}>Study</Link>
+        <Link to={`/study${q}`} className={`${btn.secondary} px-2 ${cards.length ? '' : 'pointer-events-none opacity-50'}`}>Study</Link>
         <Link to={`/quiz${q}`} className={`${btn.accent} px-2 ${cards.length ? '' : 'pointer-events-none opacity-50'}`}>Quiz</Link>
       </div>
     </div>

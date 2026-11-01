@@ -3,11 +3,11 @@ import type { CardStatus, Deck } from '../lib/types'
 
 export const btn = {
   primary:
-    'inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50',
+    'inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50',
   secondary:
-    'inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:border-stone-400 hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-50',
+    'inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300 bg-surface px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:border-stone-400 hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-50',
   accent:
-    'inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-stone-900 shadow-sm transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50',
+    'inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-amber-950 shadow-sm transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50',
   ghost:
     'inline-flex items-center justify-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-stone-600 transition hover:bg-stone-100 hover:text-stone-900',
   danger:
@@ -15,7 +15,7 @@ export const btn = {
 }
 
 export const input =
-  'w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none'
+  'w-full rounded-xl border border-stone-300 bg-surface px-3.5 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none'
 
 export const label = 'mb-1.5 block text-sm font-semibold text-stone-700'
 
@@ -31,12 +31,12 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
   }, [onClose])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-stone-900/40 p-0 sm:items-center sm:p-4" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onMouseDown={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="max-h-[92vh] w-full overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:max-w-xl sm:rounded-2xl sm:p-6"
+        className="max-h-[92vh] w-full overflow-y-auto rounded-t-2xl bg-surface p-5 shadow-xl sm:max-w-xl sm:rounded-2xl sm:p-6"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -125,7 +125,7 @@ export function DeckSelect({
 
 export function EmptyState({ title, text, children }: { title: string; text: string; children?: ReactNode }) {
   return (
-    <div className="rounded-2xl border-2 border-dashed border-stone-300 bg-white/60 px-6 py-12 text-center">
+    <div className="rounded-2xl border-2 border-dashed border-stone-300 bg-surface/60 px-6 py-12 text-center">
       <h3 className="text-lg font-bold text-stone-800">{title}</h3>
       <p className="mx-auto mt-1 max-w-md text-sm text-stone-500">{text}</p>
       {children && <div className="mt-5 flex flex-wrap justify-center gap-3">{children}</div>}
